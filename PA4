@@ -1,1 +1,282 @@
-Temporary
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+typedef struct directives {
+    char gateType[15];
+    int *inputs;
+    int *outputs;
+    int *selectors;
+    int selCount;
+} directives;
+
+void NOT(int *, int, int);
+void AND(int *, int, int, int);
+void OR(int *, int, int, int);
+void NAND(int *, int, int, int);
+void NOR(int *, int, int, int);
+void XOR(int *, int, int, int);
+int indexOf(int, char **, char *);
+int incrementInputs(int *, int);
+void resetValues(int, int *);
+void printInput(int *, int);
+void printOutput(int *, int, int);
+void doDirectivesGate(int *, directives);
+int checkLogic(int, int);
+int checkValidInput(int);
+
+void NOT(int *values, int inIndex, int outIndex) {
+    values[outIndex] = !values[inIndex];
+}
+
+void AND(int *values, int inIndexOne, int inIndexTwo, int outIndex) {
+    values[outIndex] = values[inIndexOne] && values[inIndexTwo];
+}
+
+void OR(int *values, int inIndexOne, int inIndexTwo, int outIndex) {
+    values[outIndex] = values[inIndexOne] || values[inIndexTwo];
+}
+
+void NAND(int *values, int inIndexOne, int inIndexTwo, int outIndex) {
+    values[outIndex] = !(values[inIndexOne] && values[inIndexTwo]);
+}
+
+void NOR(int *values, int inIndexOne, int inIndexTwo, int outIndex) {
+    values[outIndex] = !(values[inIndexOne] || values[inIndexTwo]);
+}
+
+void XOR(int *values, int inIndexOne, int inIndexTwo, int outIndex) {
+    values[outIndex] = values[inIndexOne] ^ values[inIndexTwo];
+}
+
+int indexOf(int size, char **arr, char *var) {
+    int i;
+    for (i = 0; i < size; i++) {
+        if (strcmp(arr[i], var) == 0) {
+            return i;
+        }
+    }
+    return -1;
+}
+
+int incrementInputs(int *arr, int inputCount) {
+    int i;
+    for (i = inputCount + 1; i >= 2; i--) {
+        arr[i] = !arr[i];
+        if (arr[i] == 1) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
+void resetValues(int size, int *arr) {
+    int i;
+    for (i = 0; i < size; i++) {
+        arr[i] = 0;
+    }
+    arr[1] = 1;
+}
+
+void printInput(int *values, int inputSize){
+    int i;
+    for (i = 0; i < inputSize; i++) {
+        printf("%d ", values[i + 2]);
+    }
+}
+
+void printOutput(int *values, int inputSize, int outputSize){
+    int i;
+    for(i = 0; i < outputSize; i++){
+        printf("%d ", values[inputSize + i + 2]);
+    }
+}
+
+void doDirectivesGate(int * values, directives step){
+    if (strcmp(step.gateType, "NOT") == 0) {
+        NOT(values, step.inputs[0], step.outputs[0]);
+    }
+    else if (strcmp(step.gateType, "AND") == 0) {
+        AND(values, step.inputs[0], step.inputs[1], step.outputs[0]);
+    }
+    else if (strcmp(step.gateType, "OR") == 0) {
+        OR(values, step.inputs[0], step.inputs[1], step.outputs[0]);
+    }
+    else if (strcmp(step.gateType, "NAND") == 0) {
+        NAND(values, step.inputs[0], step.inputs[1], step.outputs[0]);
+    }
+    else if (strcmp(step.gateType, "NOR") == 0) {
+        NOR(values, step.inputs[0], step.inputs[1], step.outputs[0]);
+    }
+    else if (strcmp(step.gateType, "XOR") == 0) {
+        XOR(values, step.inputs[0], step.inputs[1], step.outputs[0]);
+    }
+    else {
+    }
+}
+
+int checkLogic(int inputSize, int outputSize){
+    int i;
+    for(i = 0; i < inputSize; i++){
+        --outputSize;
+    }
+
+    if(outputSize == 0){
+        return 0;
+    }
+    return 0;
+}
+
+int checkValidInput(int inputSize){
+    if(inputSize < -1){
+        return 1;
+    }
+    return 0;
+}
+
+int main(int argc, char** argv) {
+    
+    if (argc - 1 < 1 || argc - 1 > 1) {
+        printf("Invalid Number Of Inputs\n");
+        return 0;
+    }
+
+    FILE *filePtr;
+    filePtr = fopen(argv[1], "r");
+
+    if(filePtr == NULL){
+        printf("Error\n");
+        return 0;
+    }
+
+    if (!filePtr) {
+        printf("Invalid File Input\n");
+        return 0;
+    }
+    
+    directives *steps = NULL;
+    int stepCount = 0;
+    int size = 2;
+    int inputCount = 0;
+    int outputCount = 0;
+    int tempCount = 0;
+    char dir[30];
+    char **names;
+    int *values = malloc(size * sizeof(int));
+
+   
+    fscanf(filePtr, " %s", dir);
+    fscanf(filePtr, "%d", &inputCount);
+
+    checkValidInput(inputCount);
+
+    size += inputCount;
+    names = malloc(size * sizeof(char *));
+    names[0] = malloc(2 * sizeof(char));
+    names[1] = malloc(2 * sizeof(char));
+    
+    names[0] = "0";
+    names[1] = "1";
+
+    int i;
+    for (i = 0; i < inputCount; i++) {
+        names[i + 2] = malloc(25 * sizeof(char));
+        fscanf(filePtr, "%10s", names[i + 2]);
+    }
+
+    fscanf(filePtr, " %s", dir);
+    fscanf(filePtr, "%d", &outputCount);
+
+    size += outputCount;
+    names = realloc(names, size * sizeof(char *));
+
+    for (i = 0; i < outputCount; i++) {
+        names[i + inputCount + 2] = malloc(25 * sizeof(char));
+        fscanf(filePtr, "%10s", names[i + inputCount + 2]);
+    }
+
+    while (!feof(filePtr)) {
+        int numInputs = 2;
+        int numOutputs = 1;
+        directives step;
+
+        int inScan = fscanf(filePtr, " %s", dir); 
+
+        if (inScan != 1) {
+            break;
+        }
+
+        stepCount++;
+        step.selCount = 0;
+
+        strcpy(step.gateType, dir);
+
+        if (strcmp(dir, "NOT") == 0) {
+            numInputs = 1;
+        }
+
+        char val[25];
+
+        step.inputs = malloc(numInputs * sizeof(int));
+        step.outputs = malloc(numOutputs * sizeof(int));
+        step.selectors = malloc(step.selCount * sizeof(int));
+
+        for (i = 0; i < numInputs; i++) {
+            fscanf(filePtr, "%10s", val);
+            step.inputs[i] = indexOf(size, names, val);
+        }
+
+        for (i = 0; i < step.selCount; i++) {
+            fscanf(filePtr, "%10s", val);
+            step.selectors[i] = indexOf(size, names, val);
+        }
+ 
+        for (i = 0; i < numOutputs; i++) {
+            fscanf(filePtr, "%10s", val);
+            int idx = indexOf(size, names, val);
+
+            if (idx <= -1) {
+                size = size + 1;
+                tempCount = tempCount + 1;
+                names = realloc(names, size * sizeof(char *));
+                int newSize = size;
+                --newSize;
+                names[newSize] = malloc(25 * sizeof(char));
+                strcpy(names[size - 1], val);
+                step.outputs[i] = size - 1;
+            } else {
+                step.outputs[i] = idx;
+            }
+        }
+        
+        if (!steps) {
+            steps = malloc(sizeof(directives));
+        } else {
+            steps = realloc(steps, stepCount * sizeof(directives));
+        }
+
+        steps[stepCount - 1] = step;
+    }
+
+    values = malloc(size * sizeof(int));
+    resetValues(size, values);
+
+    while(1) {
+      
+        printInput(values, inputCount);
+
+        for (i = 0; i < stepCount; i++) {
+            directives step = steps[i];
+            doDirectivesGate(values, step);
+        }
+
+        printOutput(values, inputCount, outputCount);
+        printf("\n");
+
+        if (!incrementInputs(values, inputCount)) {
+            break;
+        }
+        checkLogic(inputCount, outputCount);
+    }
+    return 0;
+}
